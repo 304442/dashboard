@@ -1,4 +1,4 @@
-let currentSection='dashboard';document.addEventListener('DOMContentLoaded',()=>{setTheme(localStorage.getItem('dashboardTheme')||'light');setViewMode(localStorage.getItem('dashboardViewMode')||'grid');(()=>{handleResponsiveSidebar();window.addEventListener('resize',handleResponsiveSidebar)})();initializeNavigation();initializeModals();initializeQuickActions();initializeForms();initializeSearch();initializeDropdown();initializeUserDropdown();loadSection('dashboard');console.log('Charts initialized');updateDateTime();setInterval(updateDateTime,60000)});const handleResponsiveSidebar=()=>document.querySelector('.sidebar')?.classList.toggle('mobile',window.innerWidth<=768)
+let currentSection='dashboard';document.addEventListener('DOMContentLoaded',()=>{setViewMode(localStorage.getItem('dashboardViewMode')||'grid');(()=>{handleResponsiveSidebar();window.addEventListener('resize',handleResponsiveSidebar)})();initializeNavigation();initializeModals();initializeQuickActions();initializeForms();initializeSearch();initializeDropdown();initializeUserDropdown();loadSection('dashboard');console.log('Charts initialized');updateDateTime();setInterval(updateDateTime,60000)});const handleResponsiveSidebar=()=>document.querySelector('.sidebar')?.classList.toggle('mobile',window.innerWidth<=768)
 
 const initializeNavigation=()=>document.querySelectorAll('.nav-item').forEach(i=>i.addEventListener('click',function(e){e.preventDefault();const s=this.getAttribute('data-section');if(s){loadSection(s);document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));this.classList.add('active');if(window.innerWidth<=768)document.querySelector('.sidebar')?.classList.remove('show')}}))
 
@@ -28,7 +28,7 @@ const loadHealthRecords=()=>{const r=JSON.parse(localStorage.getItem('records')|
 
 const formatCurrency=a=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(a),formatDate=d=>new Intl.DateTimeFormat('en-US').format(new Date(d)),updateDateTime=()=>{const e=document.getElementById('currentDateTime');if(e)e.textContent=new Intl.DateTimeFormat('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date())},showNotification=(m,t='info')=>{const n=document.createElement('div');n.className=`notification notification-${t}`;n.textContent=m;document.body.appendChild(n);setTimeout(()=>n.classList.add('show'),10);setTimeout(()=>{n.classList.remove('show');setTimeout(()=>n.remove(),300)},3000)}
 
-Object.assign(window,{loadSection,openModal,closeModal,closeAllForms,saveExpense,saveRevenue,saveHealthRecord,showNotification});const setTheme=t=>{document.documentElement.setAttribute('data-theme',t);localStorage.setItem('dashboardTheme',t);updateThemeIndicators()},getTheme=()=>localStorage.getItem('dashboardTheme')||'light',toggleTheme=()=>setTheme(getTheme()==='light'?'dark':'light'),updateThemeIndicators=()=>{const t=getTheme();document.querySelectorAll('.theme-option').forEach(o=>o.classList.toggle('active',o.dataset.theme===t))}
+Object.assign(window,{loadSection,openModal,closeModal,closeAllForms,saveExpense,saveRevenue,saveHealthRecord,showNotification});
 
 // Filter Panel
 let filterPanelOpen = false;
@@ -288,11 +288,7 @@ function showSettingsTab(tab) {
                     <h3>Theme</h3>
                     <div class="setting-item">
                         <span class="setting-label">Color theme</span>
-                        <div class="theme-switcher">
-                            <div class="theme-option light active" data-theme="light" onclick="setTheme('light')"></div>
-                            <div class="theme-option dark" data-theme="dark" onclick="setTheme('dark')"></div>
-                            <div class="theme-option blue" data-theme="blue" onclick="setTheme('blue')"></div>
-                        </div>
+                        <span class="setting-value">Default theme</span>
                     </div>
                     <div class="setting-item">
                         <span class="setting-label">Compact mode</span>
@@ -405,7 +401,6 @@ function showSettingsTab(tab) {
             break;
     }
     
-    updateThemeIndicators();
 }
 
 function saveSettings() {
@@ -572,10 +567,8 @@ function setViewMode(mode) {
     localStorage.setItem('dashboardViewMode', mode);
 }
 
-// Initialize theme on load
+// Initialize view mode on load
 document.addEventListener('DOMContentLoaded', function() {
-    setTheme(getTheme());
-    
     // Set initial view mode
     const savedViewMode = localStorage.getItem('dashboardViewMode') || 'grid';
     setViewMode(savedViewMode);
@@ -725,7 +718,6 @@ function performLogout() {
 }
 
 // Export enhanced functions
-window.setTheme = setTheme;
 window.toggleFilterPanel = toggleFilterPanel;
 window.refreshDashboard = refreshDashboard;
 window.showAddModal = showAddModal;
