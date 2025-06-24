@@ -1,0 +1,1488 @@
+// Dashboard Complete JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize dashboard
+    initializeDashboard();
+});
+
+// Global state
+let currentSection = 'dashboard';
+
+// Initialize dashboard functionality
+function initializeDashboard() {
+    // Initialize sidebar
+    initializeSidebar();
+    
+    // Sidebar toggle is handled in initializeSidebar()
+    
+    // Initialize navigation
+    initializeNavigation();
+    
+    // Initialize modals
+    initializeModals();
+    
+    // Initialize quick action buttons
+    initializeQuickActions();
+    
+    // Initialize forms
+    initializeForms();
+    
+    // Initialize search
+    initializeSearch();
+    
+    // Initialize dropdown
+    initializeDropdown();
+    
+    // Initialize user dropdown
+    initializeUserDropdown();
+    
+    // Load initial section
+    loadSection('dashboard');
+    
+    // Initialize charts
+    initializeCharts();
+    
+    // Initialize date/time updates
+    updateDateTime();
+    setInterval(updateDateTime, 60000);
+}
+
+// Sidebar functionality
+function initializeSidebar() {
+    // No longer needed since sidebar is always expanded
+    // Just handle responsive behavior
+    handleResponsiveSidebar();
+    window.addEventListener('resize', handleResponsiveSidebar);
+}
+
+function handleResponsiveSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    if (window.innerWidth <= 768) {
+        sidebar.classList.add('mobile');
+    } else {
+        sidebar.classList.remove('mobile');
+    }
+}
+
+// Navigation functionality
+function initializeNavigation() {
+    // Add click handlers to all nav items
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const section = this.getAttribute('data-section');
+            if (section) {
+                loadSection(section);
+                
+                // Update active state
+                navItems.forEach(n => n.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Close mobile sidebar
+                if (window.innerWidth <= 768) {
+                    document.querySelector('.sidebar').classList.remove('show');
+                }
+            }
+        });
+    });
+}
+
+// Section loading
+function loadSection(sectionName) {
+    currentSection = sectionName;
+    
+    // Hide all sections
+    const sections = document.querySelectorAll('.section-content');
+    sections.forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // Show selected section
+    const selectedSection = document.getElementById(sectionName);
+    if (selectedSection) {
+        selectedSection.style.display = 'block';
+    } else {
+        // If section not found, show dashboard
+        const dashboardSection = document.getElementById('dashboard');
+        if (dashboardSection) {
+            dashboardSection.style.display = 'block';
+        }
+    }
+    
+    // Update header title
+    updateHeaderTitle(sectionName);
+    
+    // Refresh section-specific data
+    refreshSectionData(sectionName);
+}
+
+function updateHeaderTitle(sectionName) {
+    const titles = {
+        'dashboard': 'Dashboard',
+        'operations': 'Operations',
+        'health-monitor': 'Health Monitor',
+        'health-records': 'Health Records',
+        'inventory': 'Inventory',
+        'supply-management': 'Supply Management',
+        'finance': 'Finance',
+        'analytics': 'Analytics',
+        'my-investment': 'My Investment',
+        'settings': 'Settings',
+        'financial-analytics': 'Financial Analytics',
+        'banking': 'Banking',
+        'market-intelligence': 'Market Intelligence',
+        'sales-customers': 'Sales & Customers',
+        'resource-optimization': 'Resources'
+    };
+    
+    // Determine the main section for sub-items
+    const mainSections = {
+        'resource-management': 'operations',
+        'health-records': 'health-monitor',
+        'financial-analytics': 'finance',
+        'banking': 'finance',
+        'market-intelligence': 'analytics',
+        'sales-customers': 'my-investment',
+        'resource-optimization': 'my-investment'
+    };
+    
+    const mainSection = mainSections[sectionName] || sectionName;
+    
+    // Update sidebar dropdown text with main section
+    const currentSectionSidebar = document.getElementById('currentSectionSidebar');
+    if (currentSectionSidebar) {
+        currentSectionSidebar.textContent = titles[mainSection] || 'Dashboard';
+    }
+    
+    // Update dropdown active state
+    const dropdownItems = document.querySelectorAll('.dropdown-item');
+    dropdownItems.forEach(item => {
+        if (item.getAttribute('data-section') === mainSection) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+    
+    // Show/hide sub-navigation sections
+    updateSubNavigation(mainSection);
+}
+
+function updateSubNavigation(mainSection) {
+    // Hide all sub-nav sections
+    const subNavSections = document.querySelectorAll('.sub-nav-section');
+    subNavSections.forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // Show the relevant sub-nav section
+    const subNavId = mainSection + '-nav';
+    const activeSubNav = document.getElementById(subNavId);
+    if (activeSubNav) {
+        activeSubNav.style.display = 'block';
+    }
+    
+    // Update active state for sub-navigation items
+    const navItems = document.querySelectorAll('.sub-nav-section .nav-item');
+    navItems.forEach(item => {
+        if (item.getAttribute('data-section') === currentSection) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+}
+
+function refreshSectionData(sectionName) {
+    // Refresh data based on section
+    switch(sectionName) {
+        case 'dashboard':
+            updateDashboardStats();
+            break;
+        case 'health':
+            loadHealthRecords();
+            break;
+        case 'feed':
+            updateFeedInventory();
+            break;
+        case 'financial':
+            updateFinancialSummary();
+            break;
+        case 'reports':
+            generateReports();
+            break;
+    }
+}
+
+// Modal functionality
+function initializeModals() {
+    // Close modal when clicking outside
+    const modals = document.querySelectorAll('.modal-overlay');
+    modals.forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal(this.id);
+            }
+        });
+    });
+    
+    // ESC key to close modals
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeAllForms();
+        }
+    });
+}
+
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        
+        // Reset form if exists
+        const form = modal.querySelector('form');
+        if (form) form.reset();
+    }
+}
+
+function closeAllForms() {
+    const modals = document.querySelectorAll('.modal-overlay');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+    document.body.style.overflow = '';
+}
+
+// Form functionality
+function initializeForms() {
+    // Expense form
+    const expenseForm = document.getElementById('expenseForm');
+    if (expenseForm) {
+        expenseForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveExpense();
+        });
+    }
+    
+    // Revenue form
+    const revenueForm = document.getElementById('revenueForm');
+    if (revenueForm) {
+        revenueForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveRevenue();
+        });
+    }
+    
+    // Health record form
+    const healthForm = document.getElementById('healthRecordForm');
+    if (healthForm) {
+        healthForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveHealthRecord();
+        });
+    }
+}
+
+// Save functions
+function saveExpense() {
+    try {
+        const form = document.getElementById('expenseForm');
+        const formData = new FormData(form);
+        
+        // Validation
+        const amount = parseFloat(formData.get('amount'));
+        if (!formData.get('date') || !formData.get('category') || !amount || amount <= 0) {
+            showNotification('Please fill all required fields with valid data', 'error');
+            return;
+        }
+        
+        const expense = {
+            date: formData.get('date'),
+            category: formData.get('category'),
+            amount: amount,
+            description: formData.get('description') || '',
+            timestamp: new Date().toISOString()
+        };
+        
+        // Save to localStorage with error handling
+        try {
+            let expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+            expenses.push(expense);
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+        } catch (e) {
+            showNotification('Storage error. Please try again.', 'error');
+            return;
+        }
+        
+        // Show success message
+        showNotification('Expense saved successfully', 'success');
+        
+        // Close modal and refresh data
+        closeModal('expenseModal');
+        updateFinancialSummary();
+    } catch (error) {
+        console.error('Error saving expense:', error);
+        showNotification('An error occurred. Please try again.', 'error');
+    }
+}
+
+function saveRevenue() {
+    const formData = new FormData(document.getElementById('revenueForm'));
+    const revenue = {
+        date: formData.get('date'),
+        source: formData.get('source'),
+        amount: parseFloat(formData.get('amount')),
+        description: formData.get('description'),
+        timestamp: new Date().toISOString()
+    };
+    
+    // Save to localStorage
+    let revenues = JSON.parse(localStorage.getItem('revenues') || '[]');
+    revenues.push(revenue);
+    localStorage.setItem('revenues', JSON.stringify(revenues));
+    
+    // Show success message
+    showNotification('Revenue saved successfully', 'success');
+    
+    // Close modal and refresh data
+    closeModal('revenueModal');
+    updateFinancialSummary();
+}
+
+function saveHealthRecord() {
+    const formData = new FormData(document.getElementById('healthRecordForm'));
+    const healthRecord = {
+        itemId: formData.get('itemId'),
+        date: formData.get('date'),
+        type: formData.get('recordType'),
+        veterinarian: formData.get('veterinarian'),
+        diagnosis: formData.get('diagnosis'),
+        treatment: formData.get('treatment'),
+        medications: formData.get('medications'),
+        followUp: formData.get('followUp'),
+        cost: parseFloat(formData.get('cost') || 0),
+        timestamp: new Date().toISOString()
+    };
+    
+    // Save to localStorage
+    let records = JSON.parse(localStorage.getItem('records') || '[]');
+    records.push(healthRecord);
+    localStorage.setItem('records', JSON.stringify(records));
+    
+    // Show success message
+    showNotification('Record saved successfully', 'success');
+    
+    // Close modal and refresh data
+    closeModal('healthRecordModal');
+    loadHealthRecords();
+}
+
+// Dashboard updates
+function updateDashboardStats() {
+    // Update statistics (placeholder values)
+    updateElement('totalItems', '150');
+    updateElement('avgMetric', '85%');
+    updateElement('growthRate', '+12.5%');
+    updateElement('stockLevel', '5 days');
+    
+    // Update progress bars
+    updateProgressBar('healthProgress', 85);
+    updateProgressBar('feedProgress', 60);
+    updateProgressBar('financeProgress', 70);
+}
+
+function updateElement(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+}
+
+function updateProgressBar(id, percentage) {
+    const progressBar = document.getElementById(id);
+    if (progressBar) {
+        progressBar.style.width = percentage + '%';
+        progressBar.setAttribute('aria-valuenow', percentage);
+    }
+}
+
+// Financial updates
+function updateFinancialSummary() {
+    const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+    const revenues = JSON.parse(localStorage.getItem('revenues') || '[]');
+    
+    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalRevenues = revenues.reduce((sum, r) => sum + r.amount, 0);
+    const netProfit = totalRevenues - totalExpenses;
+    
+    updateElement('totalExpenses', formatCurrency(totalExpenses));
+    updateElement('totalRevenues', formatCurrency(totalRevenues));
+    updateElement('netProfit', formatCurrency(netProfit));
+}
+
+// Feed inventory updates
+function updateFeedInventory() {
+    // Placeholder implementation
+    const supplyTypes = ['Type A', 'Type B', 'Type C'];
+    const inventory = supplyTypes.map(type => ({
+        type,
+        current: Math.floor(Math.random() * 1000) + 100,
+        daily: Math.floor(Math.random() * 50) + 10,
+        daysRemaining: Math.floor(Math.random() * 20) + 5
+    }));
+    
+    // Update supply table if exists
+    const supplyTable = document.querySelector('#supply tbody');
+    if (supplyTable) {
+        supplyTable.innerHTML = inventory.map(item => `
+            <tr>
+                <td>${item.type}</td>
+                <td>${item.current} units</td>
+                <td>${item.daily} units</td>
+                <td>${item.daysRemaining} days</td>
+                <td><span class="badge ${item.daysRemaining < 7 ? 'badge-danger' : 'badge-success'}">
+                    ${item.daysRemaining < 7 ? 'Low' : 'Sufficient'}
+                </span></td>
+            </tr>
+        `).join('');
+    }
+}
+
+// Health records
+function loadHealthRecords() {
+    const records = JSON.parse(localStorage.getItem('records') || '[]');
+    
+    // Update health records table if exists
+    const healthTable = document.querySelector('#health tbody');
+    if (healthTable && records.length > 0) {
+        healthTable.innerHTML = records.slice(-10).reverse().map(record => `
+            <tr>
+                <td>${record.itemId || record.sheepId}</td>
+                <td>${formatDate(record.date)}</td>
+                <td>${record.type}</td>
+                <td>${record.diagnosis}</td>
+                <td>${record.treatment}</td>
+                <td>${formatCurrency(record.cost)}</td>
+            </tr>
+        `).join('');
+    }
+}
+
+// Reports generation
+function generateReports() {
+    // Placeholder for report generation
+    console.log('Generating reports...');
+}
+
+// Chart initialization
+function initializeCharts() {
+    // Placeholder for chart initialization
+    // In real implementation, would use Chart.js or similar
+    console.log('Charts initialized');
+}
+
+// Utility functions
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+    }).format(amount);
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US').format(date);
+}
+
+function updateDateTime() {
+    const now = new Date();
+    const dateTimeString = new Intl.DateTimeFormat('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(now);
+    
+    const dateTimeElement = document.getElementById('currentDateTime');
+    if (dateTimeElement) {
+        dateTimeElement.textContent = dateTimeString;
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => notification.classList.add('show'), 10);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Export functions for global access
+window.loadSection = loadSection;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.closeAllForms = closeAllForms;
+window.saveExpense = saveExpense;
+window.saveRevenue = saveRevenue;
+window.saveHealthRecord = saveHealthRecord;
+window.showNotification = showNotification;
+
+// Enhanced Dashboard Features
+
+// Theme Management
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('dashboardTheme', theme);
+    updateThemeIndicators();
+}
+
+function getTheme() {
+    return localStorage.getItem('dashboardTheme') || 'light';
+}
+
+function toggleTheme() {
+    const currentTheme = getTheme();
+    setTheme(currentTheme === 'light' ? 'dark' : 'light');
+}
+
+function updateThemeIndicators() {
+    const theme = getTheme();
+    document.querySelectorAll('.theme-option').forEach(option => {
+        option.classList.toggle('active', option.dataset.theme === theme);
+    });
+}
+
+// Filter Panel
+let filterPanelOpen = false;
+
+function toggleFilterPanel() {
+    const filterPanel = document.querySelector('.filter-panel');
+    if (!filterPanel) {
+        createFilterPanel();
+        return;
+    }
+    
+    filterPanelOpen = !filterPanelOpen;
+    filterPanel.classList.toggle('active', filterPanelOpen);
+}
+
+function createFilterPanel() {
+    const panel = document.createElement('div');
+    panel.className = 'filter-panel';
+    panel.innerHTML = `
+        <div class="filter-header">
+            <h3>Filters</h3>
+            <button class="icon-button" onclick="toggleFilterPanel()">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="filter-content">
+            <div class="filter-group">
+                <h4>Date Range</h4>
+                <div class="date-range-picker">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span>Last 30 days</span>
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="filter-group">
+                <h4>Status</h4>
+                <label class="checkbox-label">
+                    <input type="checkbox" checked> Active
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" checked> Healthy
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox"> Needs Attention
+                </label>
+            </div>
+            <div class="filter-group">
+                <h4>Categories</h4>
+                <label class="checkbox-label">
+                    <input type="checkbox" checked> All Categories
+                </label>
+            </div>
+            <button class="button button-primary" style="width: 100%; margin-top: 16px;">
+                Apply Filters
+            </button>
+        </div>
+    `;
+    document.body.appendChild(panel);
+    setTimeout(() => panel.classList.add('active'), 10);
+}
+
+// Refresh Dashboard
+function refreshDashboard() {
+    const refreshBtn = event.currentTarget;
+    const icon = refreshBtn.querySelector('svg');
+    icon.style.animation = 'spin 1s linear';
+    
+    showNotification('Refreshing dashboard data...', 'info');
+    
+    // Simulate refresh
+    setTimeout(() => {
+        icon.style.animation = '';
+        updateDashboardStats();
+        showNotification('Dashboard refreshed successfully', 'success');
+    }, 1500);
+}
+
+// Widget Management
+function showAddModal(type) {
+    if (type === 'widget') {
+        showWidgetSelector();
+    } else {
+        // Show generic add modal
+        openModal('expense-modal');
+    }
+}
+
+function showWidgetSelector() {
+    const modal = document.createElement('div');
+    modal.className = 'form-overlay';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="form-modal" style="display: block; max-width: 600px;">
+            <h3>Add Widget</h3>
+            <div class="widget-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0;">
+                <div class="widget-option" onclick="addWidget('kpi')" style="padding: 20px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.2s;">
+                    <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 8px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <div style="font-size: 13px; font-weight: 500;">KPI Card</div>
+                </div>
+                <div class="widget-option" onclick="addWidget('chart')" style="padding: 20px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.2s;">
+                    <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 8px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                    </svg>
+                    <div style="font-size: 13px; font-weight: 500;">Chart</div>
+                </div>
+                <div class="widget-option" onclick="addWidget('table')" style="padding: 20px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.2s;">
+                    <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 8px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    <div style="font-size: 13px; font-weight: 500;">Data Table</div>
+                </div>
+                <div class="widget-option" onclick="addWidget('feed')" style="padding: 20px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.2s;">
+                    <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 8px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div style="font-size: 13px; font-weight: 500;">Activity Feed</div>
+                </div>
+                <div class="widget-option" onclick="addWidget('calendar')" style="padding: 20px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.2s;">
+                    <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 8px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <div style="font-size: 13px; font-weight: 500;">Calendar</div>
+                </div>
+                <div class="widget-option" onclick="addWidget('custom')" style="padding: 20px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.2s;">
+                    <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 8px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                    </svg>
+                    <div style="font-size: 13px; font-weight: 500;">Custom</div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="button" onclick="this.closest('.form-overlay').remove()">Cancel</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function addWidget(type) {
+    showNotification(`Adding ${type} widget...`, 'info');
+    document.querySelector('.form-overlay').remove();
+    
+    // In a real implementation, this would add the widget to the dashboard
+    setTimeout(() => {
+        showNotification('Widget added successfully', 'success');
+    }, 1000);
+}
+
+// Settings Panel
+function openSettings() {
+    const overlay = document.createElement('div');
+    overlay.className = 'settings-overlay';
+    overlay.style.display = 'block';
+    
+    const panel = document.createElement('div');
+    panel.className = 'settings-panel';
+    panel.style.display = 'block';
+    panel.innerHTML = `
+        <div class="settings-header">
+            <h2>Dashboard Settings</h2>
+            <button class="icon-button" onclick="closeSettings()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="settings-tabs">
+            <div class="settings-tab active" onclick="showSettingsTab('general')">General</div>
+            <div class="settings-tab" onclick="showSettingsTab('appearance')">Appearance</div>
+            <div class="settings-tab" onclick="showSettingsTab('data')">Data & Privacy</div>
+            <div class="settings-tab" onclick="showSettingsTab('notifications')">Notifications</div>
+        </div>
+        <div class="settings-content" id="settings-content">
+            <div class="settings-group">
+                <h3>Language & Region</h3>
+                <div class="setting-item">
+                    <span class="setting-label">Language</span>
+                    <select class="small-select">
+                        <option>English</option>
+                        <option>Arabic</option>
+                        <option>Spanish</option>
+                        <option>French</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <span class="setting-label">Date Format</span>
+                    <select class="small-select">
+                        <option>MM/DD/YYYY</option>
+                        <option>DD/MM/YYYY</option>
+                        <option>YYYY-MM-DD</option>
+                    </select>
+                </div>
+            </div>
+            <div class="settings-group">
+                <h3>Dashboard Preferences</h3>
+                <div class="setting-item">
+                    <span class="setting-label">Auto-refresh data</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <span class="setting-label">Refresh interval</span>
+                    <select class="small-select">
+                        <option>30 seconds</option>
+                        <option>1 minute</option>
+                        <option>5 minutes</option>
+                        <option>10 minutes</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="form-actions" style="padding: 20px; border-top: 1px solid var(--border);">
+            <button class="button button-primary" onclick="saveSettings()">Save Changes</button>
+            <button class="button" onclick="closeSettings()">Cancel</button>
+        </div>
+    `;
+    
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+    
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+            closeSettings();
+        }
+    });
+}
+
+function closeSettings() {
+    const overlay = document.querySelector('.settings-overlay');
+    if (overlay) overlay.remove();
+}
+
+function showSettingsTab(tab) {
+    // Update active tab
+    document.querySelectorAll('.settings-tab').forEach(t => {
+        t.classList.toggle('active', t.textContent.toLowerCase() === tab);
+    });
+    
+    // Update content based on tab
+    const content = document.getElementById('settings-content');
+    if (!content) return;
+    
+    switch(tab) {
+        case 'appearance':
+            content.innerHTML = `
+                <div class="settings-group">
+                    <h3>Theme</h3>
+                    <div class="setting-item">
+                        <span class="setting-label">Color theme</span>
+                        <div class="theme-switcher">
+                            <div class="theme-option light active" data-theme="light" onclick="setTheme('light')"></div>
+                            <div class="theme-option dark" data-theme="dark" onclick="setTheme('dark')"></div>
+                            <div class="theme-option blue" data-theme="blue" onclick="setTheme('blue')"></div>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">Compact mode</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <h3>Layout</h3>
+                    <div class="setting-item">
+                        <span class="setting-label">Sidebar position</span>
+                        <select class="small-select">
+                            <option>Left</option>
+                            <option>Right</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">Default view</span>
+                        <select class="small-select">
+                            <option>Grid</option>
+                            <option>List</option>
+                            <option>Compact</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            break;
+        case 'data':
+            content.innerHTML = `
+                <div class="settings-group">
+                    <h3>Data Management</h3>
+                    <div class="setting-item">
+                        <span class="setting-label">Export all data</span>
+                        <button class="button button-small">Export</button>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">Import data</span>
+                        <button class="button button-small">Import</button>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">Clear cache</span>
+                        <button class="button button-small">Clear</button>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <h3>Privacy</h3>
+                    <div class="setting-item">
+                        <span class="setting-label">Share analytics data</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            `;
+            break;
+        case 'notifications':
+            content.innerHTML = `
+                <div class="settings-group">
+                    <h3>Notification Preferences</h3>
+                    <div class="setting-item">
+                        <span class="setting-label">Enable notifications</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">Email notifications</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">Push notifications</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <h3>Alert Types</h3>
+                    <div class="setting-item">
+                        <span class="setting-label">Critical alerts</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">Performance alerts</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <span class="setting-label">Update notifications</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            `;
+            break;
+    }
+    
+    updateThemeIndicators();
+}
+
+function saveSettings() {
+    showNotification('Settings saved successfully', 'success');
+    closeSettings();
+}
+
+// Export/Import functionality
+function showExportModal() {
+    const modal = document.createElement('div');
+    modal.className = 'form-overlay';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="form-modal" style="display: block;">
+            <h3>Export Data</h3>
+            <div class="export-options" style="margin: 20px 0;">
+                <div class="export-option" onclick="exportData('csv')">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span>Export as CSV</span>
+                </div>
+                <div class="export-option" onclick="exportData('xlsx')">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    <span>Export as Excel</span>
+                </div>
+                <div class="export-option" onclick="exportData('pdf')">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                    <span>Export as PDF</span>
+                </div>
+                <div class="export-option" onclick="exportData('json')">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                    </svg>
+                    <span>Export as JSON</span>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="button" onclick="this.closest('.form-overlay').remove()">Cancel</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function showImportModal() {
+    const modal = document.createElement('div');
+    modal.className = 'form-overlay';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="form-modal" style="display: block;">
+            <h3>Import Data</h3>
+            <div style="margin: 20px 0; text-align: center;">
+                <div style="border: 2px dashed var(--border); border-radius: 8px; padding: 40px; background: var(--bg-secondary);">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 16px; opacity: 0.5;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <p style="margin-bottom: 8px;">Drop files here or click to browse</p>
+                    <p style="font-size: 11px; color: var(--text-secondary);">Supports CSV, Excel, JSON files</p>
+                    <input type="file" style="display: none;" accept=".csv,.xlsx,.json" onchange="handleFileImport(this)">
+                    <button class="button button-small" style="margin-top: 12px;" onclick="this.previousElementSibling.click()">
+                        Browse Files
+                    </button>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="button" onclick="this.closest('.form-overlay').remove()">Cancel</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function exportData(format) {
+    showNotification(`Exporting data as ${format.toUpperCase()}...`, 'info');
+    document.querySelector('.form-overlay').remove();
+    
+    // Simulate export
+    setTimeout(() => {
+        showNotification(`Data exported successfully as ${format.toUpperCase()}`, 'success');
+    }, 1500);
+}
+
+function handleFileImport(input) {
+    const file = input.files[0];
+    if (file) {
+        showNotification(`Importing ${file.name}...`, 'info');
+        document.querySelector('.form-overlay').remove();
+        
+        // Simulate import
+        setTimeout(() => {
+            showNotification('Data imported successfully', 'success');
+            refreshDashboard();
+        }, 2000);
+    }
+}
+
+// Notification Center
+function openNotificationCenter() {
+    const modal = document.createElement('div');
+    modal.className = 'form-overlay';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="form-modal" style="display: block; max-width: 400px;">
+            <h3>Notifications</h3>
+            <div style="margin: 20px 0;">
+                <div class="activity-item">
+                    <div class="activity-indicator green"></div>
+                    <div class="activity-content">
+                        <div class="activity-title">System Update Available</div>
+                        <div class="activity-meta">2 hours ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-indicator orange"></div>
+                    <div class="activity-content">
+                        <div class="activity-title">Low Feed Stock Alert</div>
+                        <div class="activity-meta">5 hours ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-indicator blue"></div>
+                    <div class="activity-content">
+                        <div class="activity-title">Weekly Report Generated</div>
+                        <div class="activity-meta">Yesterday</div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="button button-small" onclick="clearNotifications()">Clear All</button>
+                <button class="button" onclick="this.closest('.form-overlay').remove()">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function clearNotifications() {
+    document.getElementById('notificationCount').textContent = '0';
+    document.getElementById('notificationCount').style.display = 'none';
+    showNotification('Notifications cleared', 'success');
+}
+
+// View Mode Management
+function setViewMode(mode) {
+    const viewBtns = document.querySelectorAll('.view-btn');
+    viewBtns.forEach(btn => {
+        btn.classList.toggle('active', 
+            (mode === 'grid' && btn.title === 'Grid View') ||
+            (mode === 'list' && btn.title === 'List View')
+        );
+    });
+    
+    // Apply view mode to dashboard
+    const dashboard = document.querySelector('.dashboard-grid');
+    if (dashboard) {
+        dashboard.classList.toggle('list-view', mode === 'list');
+    }
+    
+    localStorage.setItem('dashboardViewMode', mode);
+}
+
+// Initialize theme on load
+document.addEventListener('DOMContentLoaded', function() {
+    setTheme(getTheme());
+    
+    // Set initial view mode
+    const savedViewMode = localStorage.getItem('dashboardViewMode') || 'grid';
+    setViewMode(savedViewMode);
+});
+
+// Quick Actions
+function initializeQuickActions() {
+    // Add expense button
+    const addExpenseBtn = document.querySelector('[onclick="showAddExpense()"]');
+    if (addExpenseBtn) {
+        addExpenseBtn.onclick = function() {
+            openModal('expense-modal');
+        };
+    }
+    
+    // Add revenue button
+    const addRevenueBtn = document.querySelector('[onclick="showAddRevenue()"]');
+    if (addRevenueBtn) {
+        addRevenueBtn.onclick = function() {
+            openModal('revenue-modal');
+        };
+    }
+    
+    // Add health record button
+    const addHealthBtn = document.querySelector('[onclick="showAddHealthRecord()"]');
+    if (addHealthBtn) {
+        addHealthBtn.onclick = function() {
+            openModal('health-record-modal');
+        };
+    }
+}
+
+// Override functions for compatibility
+window.showAddExpense = () => openModal('expense-modal');
+window.showAddRevenue = () => openModal('revenue-modal');
+window.showAddHealthRecord = () => openModal('health-record-modal');
+
+// User Dropdown Functions
+function initializeUserDropdown() {
+    const userDropdown = document.getElementById('userDropdown');
+    if (!userDropdown) return;
+    
+    // Toggle dropdown on click
+    userDropdown.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Close all other dropdowns
+        document.querySelectorAll('.dropdown.open').forEach(dropdown => {
+            if (dropdown !== userDropdown) {
+                dropdown.classList.remove('open');
+            }
+        });
+        
+        // Toggle user dropdown
+        userDropdown.classList.toggle('open');
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!userDropdown.contains(e.target)) {
+            userDropdown.classList.remove('open');
+        }
+    });
+    
+    // Close dropdown on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            userDropdown.classList.remove('open');
+        }
+    });
+}
+
+function openUserProfile() {
+    const modal = document.createElement('div');
+    modal.className = 'form-overlay';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="form-modal" style="display: block; max-width: 400px;">
+            <h3>User Profile</h3>
+            <div style="margin: 20px 0;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div class="user-avatar" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto 12px;">US</div>
+                    <h4>User</h4>
+                    <p style="color: var(--text-secondary); font-size: 13px;">user@example.com</p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Display Name</label>
+                    <input type="text" class="form-input" value="User" placeholder="Enter display name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" value="user@example.com" placeholder="Enter email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Role</label>
+                    <input type="text" class="form-input" value="Administrator" readonly>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="button button-primary" onclick="saveProfile(); this.closest('.form-overlay').remove();">Save Changes</button>
+                <button class="button" onclick="this.closest('.form-overlay').remove()">Cancel</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Close user dropdown
+    document.getElementById('userDropdown')?.classList.remove('open');
+}
+
+function saveProfile() {
+    showNotification('Profile updated successfully', 'success');
+}
+
+function showLogoutConfirm() {
+    const modal = document.createElement('div');
+    modal.className = 'form-overlay';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="form-modal" style="display: block; max-width: 300px; text-align: center;">
+            <h3>Sign Out</h3>
+            <p style="margin: 20px 0; color: var(--text-secondary);">Are you sure you want to sign out?</p>
+            <div class="form-actions">
+                <button class="button button-primary" onclick="performLogout()">Sign Out</button>
+                <button class="button" onclick="this.closest('.form-overlay').remove()">Cancel</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Close user dropdown
+    document.getElementById('userDropdown')?.classList.remove('open');
+}
+
+function performLogout() {
+    showNotification('Signing out...', 'info');
+    
+    // Clear any stored data (optional)
+    // localStorage.clear();
+    
+    // In a real app, this would redirect to login page
+    setTimeout(() => {
+        showNotification('Signed out successfully', 'success');
+        document.querySelector('.form-overlay')?.remove();
+    }, 1000);
+}
+
+// Export enhanced functions
+window.setTheme = setTheme;
+window.toggleFilterPanel = toggleFilterPanel;
+window.refreshDashboard = refreshDashboard;
+window.showAddModal = showAddModal;
+window.openSettings = openSettings;
+window.closeSettings = closeSettings;
+window.showSettingsTab = showSettingsTab;
+window.showExportModal = showExportModal;
+window.showImportModal = showImportModal;
+window.openNotificationCenter = openNotificationCenter;
+window.setViewMode = setViewMode;
+window.addWidget = addWidget;
+window.exportData = exportData;
+window.handleFileImport = handleFileImport;
+window.clearNotifications = clearNotifications;
+window.saveSettings = saveSettings;
+window.openUserProfile = openUserProfile;
+window.showLogoutConfirm = showLogoutConfirm;
+window.performLogout = performLogout;
+window.saveProfile = saveProfile;
+
+// Search functionality
+function initializeSearch() {
+    const searchInput = document.getElementById('dashboardSearch');
+    if (!searchInput) return;
+    
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.toLowerCase().trim();
+        
+        // Debounce search
+        searchTimeout = setTimeout(() => {
+            performSearch(query);
+        }, 300);
+    });
+    
+    // Keyboard shortcut (Ctrl/Cmd + K)
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+    });
+}
+
+function performSearch(query) {
+    if (!query) {
+        // Clear search results
+        clearSearchHighlights();
+        return;
+    }
+    
+    // Search in current section
+    const currentContent = document.querySelector('.content');
+    if (!currentContent) return;
+    
+    // Clear previous highlights
+    clearSearchHighlights();
+    
+    // Search in text content
+    searchInElement(currentContent, query);
+    
+    // Search in navigation items
+    const navItems = document.querySelectorAll('.nav-item span');
+    navItems.forEach(item => {
+        if (item.textContent.toLowerCase().includes(query)) {
+            item.parentElement.style.backgroundColor = 'var(--warning-light)';
+        }
+    });
+}
+
+function searchInElement(element, query) {
+    const walker = document.createTreeWalker(
+        element,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+    );
+    
+    let node;
+    const matches = [];
+    
+    while (node = walker.nextNode()) {
+        if (node.nodeValue && node.nodeValue.toLowerCase().includes(query)) {
+            const parent = node.parentElement;
+            if (parent && !parent.classList.contains('search-highlight')) {
+                matches.push({ node, parent });
+            }
+        }
+    }
+    
+    // Highlight matches
+    matches.forEach(({ node, parent }) => {
+        const text = node.nodeValue;
+        const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+        const highlightedText = text.replace(regex, '<mark class="search-highlight">$1</mark>');
+        
+        const span = document.createElement('span');
+        span.innerHTML = highlightedText;
+        parent.replaceChild(span, node);
+    });
+    
+    // Scroll to first match
+    const firstMatch = document.querySelector('.search-highlight');
+    if (firstMatch) {
+        firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function clearSearchHighlights() {
+    // Remove text highlights
+    const highlights = document.querySelectorAll('.search-highlight');
+    highlights.forEach(highlight => {
+        const parent = highlight.parentNode;
+        parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+    });
+    
+    // Reset nav item backgrounds
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        if (!item.classList.contains('active')) {
+            item.style.backgroundColor = '';
+        }
+    });
+}
+
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Dropdown functionality
+function initializeDropdown() {
+    // Initialize sidebar dropdown
+    const sidebarDropdown = document.getElementById('sectionDropdownSidebar');
+    const sidebarToggle = document.getElementById('dropdownToggleSidebar');
+    
+    if (sidebarDropdown && sidebarToggle) {
+        setupDropdown(sidebarDropdown, sidebarToggle, 'currentSectionSidebar');
+    }
+}
+
+function setupDropdown(dropdown, toggle, textElementId) {
+    const dropdownItems = dropdown.querySelectorAll('.dropdown-item');
+    
+    // Toggle dropdown
+    toggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Close all other dropdowns
+        document.querySelectorAll('.dropdown.open').forEach(d => {
+            if (d !== dropdown) d.classList.remove('open');
+        });
+        
+        dropdown.classList.toggle('open');
+    });
+    
+    // Handle dropdown item clicks
+    dropdownItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const section = this.getAttribute('data-section');
+            
+            // Update active state across all dropdowns
+            document.querySelectorAll('.dropdown-item').forEach(i => {
+                if (i.getAttribute('data-section') === section) {
+                    i.classList.add('active');
+                } else {
+                    i.classList.remove('active');
+                }
+            });
+            
+            // Update dropdown text
+            const sectionName = this.querySelector('span').textContent;
+            if (textElementId) {
+                const textElement = document.getElementById(textElementId);
+                if (textElement) textElement.textContent = sectionName;
+            }
+            
+            // Close dropdown
+            dropdown.classList.remove('open');
+            
+            // Load section
+            loadSection(section);
+            
+            // Update sidebar navigation to match
+            const sidebarItems = document.querySelectorAll('.nav-item');
+            sidebarItems.forEach(navItem => {
+                if (navItem.getAttribute('data-section') === section) {
+                    navItem.classList.add('active');
+                } else {
+                    navItem.classList.remove('active');
+                }
+            });
+        });
+    });
+    
+    // Close dropdown when clicking outside (except for sidebar dropdown)
+    document.addEventListener('click', function(e) {
+        if (!dropdown.contains(e.target)) {
+            // Don't close sidebar dropdown when clicking inside sidebar
+            if (dropdown.id === 'sectionDropdownSidebar' && 
+                e.target.closest('.sidebar')) {
+                return;
+            }
+            dropdown.classList.remove('open');
+        }
+    });
+    
+    // Close dropdown on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            dropdown.classList.remove('open');
+        }
+    });
+}
