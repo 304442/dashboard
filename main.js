@@ -307,14 +307,6 @@ function showSettingsTab(tab) {
                             <option>Right</option>
                         </select>
                     </div>
-                    <div class="setting-item">
-                        <span class="setting-label">Default view</span>
-                        <select class="small-select">
-                            <option>Grid</option>
-                            <option>List</option>
-                            <option>Compact</option>
-                        </select>
-                    </div>
                 </div>
             `;
             break;
@@ -322,14 +314,6 @@ function showSettingsTab(tab) {
             content.innerHTML = `
                 <div class="settings-group">
                     <h3>Data Management</h3>
-                    <div class="setting-item">
-                        <span class="setting-label">Export all data</span>
-                        <button class="button button-small">Export</button>
-                    </div>
-                    <div class="setting-item">
-                        <span class="setting-label">Import data</span>
-                        <button class="button button-small">Import</button>
-                    </div>
                     <div class="setting-item">
                         <span class="setting-label">Clear cache</span>
                         <button class="button button-small">Clear</button>
