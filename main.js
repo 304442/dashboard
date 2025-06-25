@@ -4,7 +4,7 @@ const initializeNavigation=()=>document.querySelectorAll('.nav-item').forEach(i=
 
 const loadSection=s=>{currentSection=s;document.querySelectorAll('.section-content').forEach(e=>e.style.display='none');const el=document.getElementById(s)||document.getElementById('dashboard');if(el)el.style.display='block';updateHeaderTitle(s);refreshSectionData(s)}
 
-const updateHeaderTitle=s=>{const titles={'dashboard':'Dashboard','operations':'Operations','health-monitor':'Health Monitor','health-records':'Health Records','inventory':'Inventory','supply-management':'Supply Management','finance':'Finance','analytics':'Analytics','my-investment':'My Investment','settings':'Settings','financial-analytics':'Financial Analytics','banking':'Banking','market-intelligence':'Market Intelligence','sales-customers':'Sales & Customers','resource-optimization':'Resources'},mainSections={'resource-management':'operations','health-records':'health-monitor','financial-analytics':'finance','banking':'finance','market-intelligence':'analytics','sales-customers':'my-investment','resource-optimization':'my-investment'},m=mainSections[s]||s,el=document.getElementById('currentSectionSidebar');if(el)el.textContent=titles[m]||'Dashboard';document.querySelectorAll('.dropdown-item').forEach(i=>i.classList.toggle('active',i.getAttribute('data-section')===m));updateSubNavigation(m)}
+const updateHeaderTitle=s=>{const titles={'dashboard':'Dashboard','operations':'Operations','health-monitor':'Health Monitor','health-records':'Health Records','inventory':'Inventory','supply-management':'Supply Management','finance':'Finance','analytics':'Analytics','my-investment':'My Investment','settings':'Settings','financial-analytics':'Financial Analytics','banking':'Banking','market-intelligence':'Market Intelligence','sales-customers':'Sales & Customers','resource-optimization':'Resources','overview':'Dashboard','performance':'Dashboard','activity-log':'Dashboard'},mainSections={'resource-management':'operations','health-records':'health-monitor','financial-analytics':'finance','banking':'finance','market-intelligence':'analytics','sales-customers':'my-investment','resource-optimization':'my-investment','overview':'dashboard','performance':'dashboard','activity-log':'dashboard'},m=mainSections[s]||s,el=document.getElementById('currentSectionSidebar');if(el)el.textContent=titles[m]||'Dashboard';document.querySelectorAll('.dropdown-item').forEach(i=>i.classList.toggle('active',i.getAttribute('data-section')===m));updateSubNavigation(m)}
 
 const updateSubNavigation=m=>{document.querySelectorAll('.sub-nav-section').forEach(s=>s.style.display='none');const el=document.getElementById(m+'-nav');if(el)el.style.display='block';document.querySelectorAll('.sub-nav-section .nav-item').forEach(i=>i.classList.toggle('active',i.getAttribute('data-section')===currentSection))}
 
@@ -30,70 +30,10 @@ const formatCurrency=a=>new Intl.NumberFormat('en-US',{style:'currency',currency
 
 Object.assign(window,{loadSection,openModal,closeModal,closeAllForms,saveExpense,saveRevenue,saveHealthRecord,showNotification});
 
-// Filter Panel
-let filterPanelOpen = false;
-
+// Filter Panel - Placeholder function
 function toggleFilterPanel() {
-    const filterPanel = document.querySelector('.filter-panel');
-    if (!filterPanel) {
-        createFilterPanel();
-        return;
-    }
-    
-    filterPanelOpen = !filterPanelOpen;
-    filterPanel.classList.toggle('active', filterPanelOpen);
-}
-
-function createFilterPanel() {
-    const panel = document.createElement('div');
-    panel.className = 'filter-panel';
-    panel.innerHTML = `
-        <div class="filter-header">
-            <h3>Filters</h3>
-            <button class="icon-button" onclick="toggleFilterPanel()">
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-        <div class="filter-content">
-            <div class="filter-group">
-                <h4>Date Range</h4>
-                <div class="date-range-picker">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <span>Last 30 days</span>
-                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="filter-group">
-                <h4>Status</h4>
-                <label class="checkbox-label">
-                    <input type="checkbox" checked> Active
-                </label>
-                <label class="checkbox-label">
-                    <input type="checkbox" checked> Healthy
-                </label>
-                <label class="checkbox-label">
-                    <input type="checkbox"> Needs Attention
-                </label>
-            </div>
-            <div class="filter-group">
-                <h4>Categories</h4>
-                <label class="checkbox-label">
-                    <input type="checkbox" checked> All Categories
-                </label>
-            </div>
-            <button class="button button-primary" style="width: 100%; margin-top: 16px;">
-                Apply Filters
-            </button>
-        </div>
-    `;
-    document.body.appendChild(panel);
-    setTimeout(() => panel.classList.add('active'), 10);
+    // Filter functionality removed - icon kept for UI consistency
+    console.log('Filter panel clicked');
 }
 
 // Refresh Dashboard
