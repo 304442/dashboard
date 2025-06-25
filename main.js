@@ -1,12 +1,43 @@
 let currentSection='dashboard';document.addEventListener('DOMContentLoaded',()=>{setViewMode(localStorage.getItem('dashboardViewMode')||'grid');(()=>{handleResponsiveSidebar();window.addEventListener('resize',handleResponsiveSidebar)})();initializeNavigation();initializeModals();initializeQuickActions();initializeForms();initializeSearch();initializeUserDropdown();loadSection('dashboard');console.log('Charts initialized');updateDateTime();setInterval(updateDateTime,60000)});const handleResponsiveSidebar=()=>document.querySelector('.sidebar')?.classList.toggle('mobile',window.innerWidth<=768)
 
-const initializeNavigation=()=>document.querySelectorAll('.nav-item').forEach(i=>i.addEventListener('click',function(e){e.preventDefault();const s=this.getAttribute('data-section');if(s){loadSection(s);document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));this.classList.add('active');if(window.innerWidth<=768)document.querySelector('.sidebar')?.classList.remove('show')}}))
+const initializeNavigation=()=>{
+    // Remove existing listeners to avoid duplicates
+    document.querySelectorAll('.nav-item').forEach(i=>i.replaceWith(i.cloneNode(true)));
+    
+    // Add click listeners to all nav items (both main dropdown and sidebar submenus)
+    document.querySelectorAll('.nav-item').forEach(i=>i.addEventListener('click',function(e){
+        e.preventDefault();
+        const s=this.getAttribute('data-section');
+        if(s){
+            loadSection(s);
+            document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+            this.classList.add('active');
+            if(window.innerWidth<=768)document.querySelector('.sidebar')?.classList.remove('show');
+        }
+    }));
+}
 
-const loadSection=s=>{currentSection=s;document.querySelectorAll('.section-content').forEach(e=>e.style.display='none');const el=document.getElementById(s)||document.getElementById('dashboard');if(el)el.style.display='block';updateHeaderTitle(s);refreshSectionData(s)}
+const loadSection=s=>{
+    currentSection=s;
+    document.querySelectorAll('.section-content').forEach(e=>e.style.display='none');
+    const el=document.getElementById(s)||document.getElementById('dashboard');
+    if(el)el.style.display='block';
+    updateHeaderTitle(s);
+    refreshSectionData(s)
+}
 
 const updateHeaderTitle=s=>{const titles={'dashboard':'Dashboard','operations':'Operations','health-monitor':'Health Monitor','health-records':'Health Records','inventory':'Inventory','supply-management':'Supply Management','finance':'Finance','analytics':'Analytics','my-investment':'My Investment','settings':'Settings','financial-analytics':'Financial Analytics','banking':'Banking','market-intelligence':'Market Intelligence','sales-customers':'Sales & Customers','resource-optimization':'Resources','overview':'Dashboard','performance':'Dashboard','activity-log':'Dashboard'},mainSections={'resource-management':'operations','health-records':'health-monitor','financial-analytics':'finance','banking':'finance','market-intelligence':'analytics','sales-customers':'my-investment','resource-optimization':'my-investment','overview':'dashboard','performance':'dashboard','activity-log':'dashboard'},m=mainSections[s]||s,el=document.getElementById('currentSectionSidebar');if(el)el.textContent=titles[m]||'Dashboard';document.querySelectorAll('.dropdown-item').forEach(i=>i.classList.toggle('active',i.getAttribute('data-section')===m));updateSubNavigation(m)}
 
-const updateSubNavigation=m=>{document.querySelectorAll('.sub-nav-section').forEach(s=>s.style.display='none');const el=document.getElementById(m+'-nav');if(el)el.style.display='block';document.querySelectorAll('.sub-nav-section .nav-item').forEach(i=>i.classList.toggle('active',i.getAttribute('data-section')===currentSection))}
+const updateSubNavigation=m=>{
+    document.querySelectorAll('.sub-nav-section').forEach(s=>s.style.display='none');
+    const el=document.getElementById(m+'-nav');
+    if(el){
+        el.style.display='block';
+        // Re-initialize navigation for newly visible submenu items
+        initializeNavigation();
+    }
+    document.querySelectorAll('.sub-nav-section .nav-item').forEach(i=>i.classList.toggle('active',i.getAttribute('data-section')===currentSection));
+}
 
 const refreshSectionData=s=>({'dashboard':updateDashboardStats,'health':loadHealthRecords,'feed':updateFeedInventory,'financial':updateFinancialSummary,'reports':generateReports}[s]||function(){})()
 
@@ -20,7 +51,7 @@ const saveRevenue=()=>{const f=new FormData(document.getElementById('revenueForm
 
 const saveHealthRecord=()=>{const f=new FormData(document.getElementById('healthRecordForm')),h={itemId:f.get('itemId'),date:f.get('date'),type:f.get('recordType'),veterinarian:f.get('veterinarian'),diagnosis:f.get('diagnosis'),treatment:f.get('treatment'),medications:f.get('medications'),followUp:f.get('followUp'),cost:parseFloat(f.get('cost')||0),timestamp:new Date().toISOString()};let r=JSON.parse(localStorage.getItem('records')||'[]');r.push(h);localStorage.setItem('records',JSON.stringify(r));showNotification('Record saved successfully','success');closeModal('healthRecordModal');loadHealthRecords()}
 
-const updateDashboardStats=()=>{[['totalItems','150'],['avgMetric','85%'],['growthRate','+12.5%'],['stockLevel','5 days']].forEach(([i,v])=>updateElement(i,v));[['healthProgress',85],['feedProgress',60],['financeProgress',70]].forEach(([i,p])=>updateProgressBar(i,p))},updateElement=(i,v)=>{const e=document.getElementById(i);if(e)e.textContent=v},updateProgressBar=(i,p)=>{const b=document.getElementById(i);if(b){b.style.width=p+'%';b.setAttribute('aria-valuenow',p)}}
+const updateDashboardStats=()=>{[['totalItems','342 Sheep'],['avgMetric','96% Health'],['growthRate','+18 births'],['stockLevel','1,250 kg meat']].forEach(([i,v])=>updateElement(i,v));[['healthProgress',96],['feedProgress',75],['financeProgress',85]].forEach(([i,p])=>updateProgressBar(i,p))},updateElement=(i,v)=>{const e=document.getElementById(i);if(e)e.textContent=v},updateProgressBar=(i,p)=>{const b=document.getElementById(i);if(b){b.style.width=p+'%';b.setAttribute('aria-valuenow',p)}}
 
 const updateFinancialSummary=()=>{const e=JSON.parse(localStorage.getItem('expenses')||'[]'),r=JSON.parse(localStorage.getItem('revenues')||'[]'),te=e.reduce((s,e)=>s+e.amount,0),tr=r.reduce((s,r)=>s+r.amount,0);[['totalExpenses',te],['totalRevenues',tr],['netProfit',tr-te]].forEach(([i,v])=>updateElement(i,formatCurrency(v)))},updateFeedInventory=()=>{const i=['Type A','Type B','Type C'].map(t=>({type:t,current:Math.floor(Math.random()*1000)+100,daily:Math.floor(Math.random()*50)+10,daysRemaining:Math.floor(Math.random()*20)+5})),t=document.querySelector('#supply tbody');if(t)t.innerHTML=i.map(i=>`<tr><td>${i.type}</td><td>${i.current} units</td><td>${i.daily} units</td><td>${i.daysRemaining} days</td><td><span class="badge ${i.daysRemaining<7?'badge-danger':'badge-success'}">${i.daysRemaining<7?'Low':'Sufficient'}</span></td></tr>`).join('')}
 
@@ -687,6 +718,14 @@ function initializeSearch() {
             searchInput.select();
         }
     });
+    
+    // Initialize sidebar dropdown
+    const sidebarDropdown = document.getElementById('sectionDropdownSidebar');
+    const sidebarToggle = document.getElementById('dropdownToggleSidebar');
+    
+    if (sidebarDropdown && sidebarToggle) {
+        setupDropdown(sidebarDropdown, sidebarToggle, 'currentSectionSidebar');
+    }
 }
 
 function performSearch(query) {
@@ -785,8 +824,16 @@ function initializeDropdown() {
     }
 }
 
+// Make initializeDropdown globally available
+window.initializeDropdown = initializeDropdown;
+
 function setupDropdown(dropdown, toggle, textElementId) {
-    const dropdownItems = dropdown.querySelectorAll('.dropdown-item');
+    const dropdownMenu = dropdown.querySelector('.dropdown-menu');
+    let currentLevel = 'main'; // Track if we're showing main menu or submenu
+    let currentMainSection = null;
+    
+    // Store original main menu items - wait for content to be loaded
+    let originalMenuHTML = dropdownMenu.innerHTML;
     
     // Toggle dropdown
     toggle.addEventListener('click', function(e) {
@@ -798,48 +845,161 @@ function setupDropdown(dropdown, toggle, textElementId) {
             if (d !== dropdown) d.classList.remove('open');
         });
         
+        // Reset to main menu when opening
+        if (!dropdown.classList.contains('open')) {
+            currentLevel = 'main';
+            // Refresh originalMenuHTML in case it was populated after initialization
+            if (dropdownMenu.children.length > 0 && !originalMenuHTML.trim()) {
+                originalMenuHTML = dropdownMenu.innerHTML;
+            }
+            dropdownMenu.innerHTML = originalMenuHTML;
+            setupMainMenuItems();
+        }
+        
         dropdown.classList.toggle('open');
     });
     
-    // Handle dropdown item clicks
-    dropdownItems.forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            const section = this.getAttribute('data-section');
-            
-            // Update active state across all dropdowns
-            document.querySelectorAll('.dropdown-item').forEach(i => {
-                if (i.getAttribute('data-section') === section) {
-                    i.classList.add('active');
-                } else {
-                    i.classList.remove('active');
-                }
-            });
-            
-            // Update dropdown text
-            const sectionName = this.querySelector('span').textContent;
-            if (textElementId) {
-                const textElement = document.getElementById(textElementId);
-                if (textElement) textElement.textContent = sectionName;
-            }
-            
-            // Close dropdown
-            dropdown.classList.remove('open');
-            
-            // Load section
-            loadSection(section);
-            
-            // Update sidebar navigation to match
-            const sidebarItems = document.querySelectorAll('.nav-item');
-            sidebarItems.forEach(navItem => {
-                if (navItem.getAttribute('data-section') === section) {
-                    navItem.classList.add('active');
-                } else {
-                    navItem.classList.remove('active');
-                }
+    function setupMainMenuItems() {
+        const dropdownItems = dropdownMenu.querySelectorAll('.dropdown-item');
+        
+        dropdownItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const section = this.getAttribute('data-section');
+                currentMainSection = section;
+                
+                // Show submenu for this section
+                showSubmenu(section);
             });
         });
-    });
+    }
+    
+    function showSubmenu(mainSection) {
+        const submenus = {
+            'dashboard': [
+                {id: 'overview', label: 'Overview', icon: 'M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2'},
+                {id: 'performance', label: 'Performance', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'},
+                {id: 'activity-log', label: 'Activity Log', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'}
+            ],
+            'operations': [
+                {id: 'resource-management', label: 'Feed Management', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'}
+            ],
+            'health-monitor': [
+                {id: 'health-records', label: 'Health Records', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'}
+            ],
+            'finance': [
+                {id: 'financial-analytics', label: 'Financial Analytics', icon: 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z'},
+                {id: 'banking', label: 'Banking', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'}
+            ],
+            'analytics': [
+                {id: 'market-intelligence', label: 'Market Intelligence', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'}
+            ],
+            'my-investment': [
+                {id: 'sales-customers', label: 'Sales & Customers', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z'},
+                {id: 'resource-optimization', label: 'Resources', icon: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4'}
+            ]
+        };
+        
+        const submenuItems = submenus[mainSection] || [];
+        
+        if (submenuItems.length > 0) {
+            // Create back button + submenu items
+            let submenuHTML = `
+                <a href="#" class="dropdown-item back-item" style="border-bottom: 1px solid var(--border); margin-bottom: 4px; padding-bottom: 8px;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    <span>Back</span>
+                </a>
+            `;
+            
+            submenuItems.forEach((item, index) => {
+                submenuHTML += `
+                    <a href="#" class="dropdown-item${index === 0 ? ' active' : ''}" data-section="${item.id}">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${item.icon}"></path>
+                        </svg>
+                        <span>${item.label}</span>
+                    </a>
+                `;
+            });
+            
+            dropdownMenu.innerHTML = submenuHTML;
+            currentLevel = 'submenu';
+            
+            // Setup submenu event handlers
+            setupSubmenuItems();
+            
+            // Auto-select first item and load its section
+            const firstItem = submenuItems[0];
+            loadSection(firstItem.id);
+            updateDropdownText(firstItem.label);
+            
+            // Update sidebar navigation
+            updateSubNavigation(mainSection);
+        }
+    }
+    
+    function setupSubmenuItems() {
+        const backItem = dropdownMenu.querySelector('.back-item');
+        const submenuItems = dropdownMenu.querySelectorAll('.dropdown-item:not(.back-item)');
+        
+        // Back button handler
+        if (backItem) {
+            backItem.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentLevel = 'main';
+                dropdownMenu.innerHTML = originalMenuHTML;
+                setupMainMenuItems();
+            });
+        }
+        
+        // Submenu item handlers
+        submenuItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const section = this.getAttribute('data-section');
+                
+                // Update active state in submenu
+                submenuItems.forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update dropdown text
+                const sectionName = this.querySelector('span').textContent;
+                updateDropdownText(sectionName);
+                
+                // Close dropdown
+                dropdown.classList.remove('open');
+                
+                // Load section
+                loadSection(section);
+                
+                // Update sidebar navigation to match
+                updateSidebarNavigation(section);
+            });
+        });
+    }
+    
+    function updateDropdownText(text) {
+        if (textElementId) {
+            const textElement = document.getElementById(textElementId);
+            if (textElement) textElement.textContent = text;
+        }
+    }
+    
+    function updateSidebarNavigation(section) {
+        const sidebarItems = document.querySelectorAll('.nav-item');
+        sidebarItems.forEach(navItem => {
+            if (navItem.getAttribute('data-section') === section) {
+                navItem.classList.add('active');
+            } else {
+                navItem.classList.remove('active');
+            }
+        });
+    }
+    
+    // Initialize main menu items on first load
+    setupMainMenuItems();
     
     // Close dropdown when clicking outside (except for sidebar dropdown)
     document.addEventListener('click', function(e) {
